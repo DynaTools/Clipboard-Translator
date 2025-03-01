@@ -1,4 +1,3 @@
-
 """
 Script para criar executável do Clipboard Translator AI
 """
@@ -35,24 +34,22 @@ if not os.path.exists('assets'):
     print("AVISO: A pasta 'assets' não foi encontrada. Criando pasta vazia...")
     os.makedirs('assets')
 
-# Executar PyInstaller via comando de shell para melhor compatibilidade com Replit
+# Forçar modo Windows independentemente do ambiente
+print("Configurando para gerar .exe Windows...")
 command = [
     'pyinstaller',
     'main-py.py',                  # Script principal
     '--name=ClipboardTranslatorAI',# Nome do executável
     '--onefile',                   # Arquivo único
     '--add-data=assets:assets',    # Incluir a pasta assets
-    '--clean'                      # Limpar cache antes de construir
+    '--clean',                     # Limpar cache antes de construir
+    '--windowed',                  # Interface gráfica sem terminal
+    '--target-architecture=x86_64' # Arquitetura 64-bit
 ]
 
-# No Replit, o modo console é mais confiável
-if os.environ.get('REPLIT_ENVIRONMENT') == 'true':
-    print("Detectado ambiente Replit: usando modo console")
-else:
-    command.append('--windowed')
-    # Adicionar ícone apenas se existir
-    if os.path.exists('assets/logo.png'):
-        command.extend(['--icon=assets/logo.png'])
+# Adicionar ícone apenas se existir
+if os.path.exists('assets/logo.png'):
+    command.extend(['--icon=assets/logo.png'])
 
 print(f"Comando a ser executado: {' '.join(command)}")
 print("Iniciando a criação do executável...")
@@ -61,32 +58,29 @@ print("Isso pode levar alguns minutos...")
 try:
     # Execute com mais informações de saída
     result = subprocess.run(command, check=False, capture_output=True, text=True)
-    
+
     # Exibir saída padrão e de erro para debug
     print("\nSaída do comando:")
     print(result.stdout)
-    
+
     if result.returncode != 0:
         print("\nERRO na execução do comando:")
         print(result.stderr)
         print(f"Código de saída: {result.returncode}")
     else:
         print("Executável criado com sucesso! Disponível na pasta 'dist'.")
-        
+
         # Verificar se o executável realmente foi criado
         exe_path = os.path.join('dist', 'ClipboardTranslatorAI.exe')
-        unix_path = os.path.join('dist', 'ClipboardTranslatorAI')
-        
+
         if os.path.exists(exe_path):
             print(f"Executável confirmado em: {exe_path}")
-        elif os.path.exists(unix_path):
-            print(f"Executável confirmado em: {unix_path}")
         else:
-            print("AVISO: Executável não encontrado na pasta 'dist'!")
+            print("AVISO: Executável .exe não encontrado na pasta 'dist'!")
             print("Conteúdo da pasta 'dist':")
             for item in os.listdir('dist'):
                 print(f"- {item}")
-                
+
 except Exception as e:
     print(f"Erro ao criar o executável: {e}")
     print("Detalhes do erro:")

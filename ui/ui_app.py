@@ -91,38 +91,42 @@ class TranslatorApp:
         """Create control buttons for the application"""
         control_frame = ttk.Frame(self.main_frame)
         control_frame.pack(fill=tk.X, pady=10)
-        
-        # Define buttons with consistent width and style
-        button_width = 15
+
+        # Frame para botões da esquerda
+        left_frame = ttk.Frame(control_frame)
+        left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Frame para botões da direita
+        right_frame = ttk.Frame(control_frame)
+        right_frame.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+
+        # Botões com tamanho relativo
         button_padding = 5
-        
+
         self.restart_button = ttk.Button(
-            control_frame, 
+            left_frame, 
             text="RESTART", 
-            width=button_width,
             command=self.restart_app,
             style="Secondary.TButton"
         )
-        self.restart_button.pack(side=tk.LEFT, padx=button_padding)
-        
+        self.restart_button.pack(side=tk.LEFT, padx=button_padding, fill=tk.X, expand=True)
+
         self.stop_button = ttk.Button(
-            control_frame, 
+            left_frame, 
             text="STOP", 
-            width=button_width,
             command=self.stop_monitoring,
             state=tk.DISABLED,
             style="Danger.TButton"
         )
-        self.stop_button.pack(side=tk.LEFT, padx=button_padding)
-        
+        self.stop_button.pack(side=tk.LEFT, padx=button_padding, fill=tk.X, expand=True)
+
         self.run_button = ttk.Button(
-            control_frame, 
+            right_frame, 
             text="RUN", 
-            width=button_width,
             command=self.start_monitoring,
             style="Primary.TButton"
         )
-        self.run_button.pack(side=tk.RIGHT, padx=button_padding)
+        self.run_button.pack(side=tk.RIGHT, padx=button_padding, fill=tk.X, expand=True)
     
     def _load_settings(self):
         """Load saved settings into UI components"""
