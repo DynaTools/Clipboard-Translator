@@ -1,0 +1,25 @@
+name: Build Windows Executable
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pyperclip requests
+      - name: Build executable
+        run: python build_executable.py
+      - name: Upload executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-executable
+          path: dist/ClipboardTranslatorAI.exe
