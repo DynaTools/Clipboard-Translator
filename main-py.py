@@ -3,7 +3,7 @@ Clipboard Translator AI - Main Entry Point
 Author: Paulo A. Giavoni
 """
 import tkinter as tk
-from ui.app import TranslatorApp
+from ui.ui_app import TranslatorApp
 
 def main():
     """Initialize and start the application"""
