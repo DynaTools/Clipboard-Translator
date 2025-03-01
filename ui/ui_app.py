@@ -27,8 +27,31 @@ class TranslatorApp:
         # Apply theme and styles
         self.style = apply_styles(root)
         
+        # Create main frame with scrollbar
+        self.main_container = ttk.Frame(root)
+        self.main_container.pack(fill=tk.BOTH, expand=True)
+        
+        # Add a canvas for scrolling
+        self.canvas = tk.Canvas(self.main_container)
+        self.scrollbar = ttk.Scrollbar(self.main_container, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        
+        # Add mousewheel scrolling
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        
         # Create main container with padding
-        self.main_frame = ttk.Frame(root, padding="12 12 12 0")
+        self.main_frame = ttk.Frame(self.scrollable_frame, padding="12 12 12 12")
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Initialize UI components
@@ -43,6 +66,10 @@ class TranslatorApp:
         
         # Load saved settings
         self._load_settings()
+    
+    def _on_mousewheel(self, event):
+        """Handle mousewheel scrolling"""
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         
     def _init_components(self):
         """Initialize all UI components"""
@@ -50,12 +77,26 @@ class TranslatorApp:
         self.header = HeaderComponent(self.main_frame)
         self.header.pack(fill=tk.X, pady=(0, 10))
         
-        # Language selector
+        # First row: Language selector and tone selector side by side
+        first_row = ttk.Frame(self.main_frame)
+        first_row.pack(fill=tk.X, pady=5)
+        
+        # Language selector (left side)
+        left_frame = ttk.Frame(first_row)
+        left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
         self.lang_selector = LanguageSelectorComponent(
-            self.main_frame, 
+            left_frame, 
             on_swap=self._on_language_swap
         )
-        self.lang_selector.pack(fill=tk.X, pady=10)
+        self.lang_selector.pack(fill=tk.BOTH, expand=True)
+        
+        # Tone selector (right side)
+        right_frame = ttk.Frame(first_row)
+        right_frame.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=(5, 0))
+        
+        self.tone_selector = ToneSelectorComponent(right_frame)
+        self.tone_selector.pack(fill=tk.BOTH, expand=True)
         
         # API Configuration
         self.api_config = ApiConfigComponent(
@@ -63,25 +104,21 @@ class TranslatorApp:
             on_engine_change=self._on_engine_change,
             on_test_connection=self._on_test_connection
         )
-        self.api_config.pack(fill=tk.X, pady=10)
+        self.api_config.pack(fill=tk.X, pady=5)
         
-        # Translation tone selector
-        self.tone_selector = ToneSelectorComponent(self.main_frame)
-        self.tone_selector.pack(fill=tk.X, pady=10)
-        
-        # Context editor
+        # Context editor with reduced height
         self.context_editor = ContextEditorComponent(
             self.main_frame,
             on_apply=self._on_context_apply
         )
-        self.context_editor.pack(fill=tk.BOTH, expand=True, pady=10)
+        self.context_editor.pack(fill=tk.BOTH, expand=False, pady=5)
         
-        # Translation history
-        self.history_panel = HistoryPanelComponent(self.main_frame)
-        self.history_panel.pack(fill=tk.BOTH, expand=True, pady=10)
-        
-        # Control buttons
+        # Control buttons (moved up before history panel)
         self._create_control_buttons()
+        
+        # Translation history with fixed height
+        self.history_panel = HistoryPanelComponent(self.main_frame)
+        self.history_panel.pack(fill=tk.BOTH, expand=True, pady=5)
         
         # Status bar
         self.status_bar = StatusBarComponent(self.root)
@@ -90,43 +127,41 @@ class TranslatorApp:
     def _create_control_buttons(self):
         """Create control buttons for the application"""
         control_frame = ttk.Frame(self.main_frame)
-        control_frame.pack(fill=tk.X, pady=10)
-
-        # Frame para botões da esquerda
-        left_frame = ttk.Frame(control_frame)
-        left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-
-        # Frame para botões da direita
-        right_frame = ttk.Frame(control_frame)
-        right_frame.pack(side=tk.RIGHT, fill=tk.X, expand=True)
-
-        # Botões com tamanho relativo
+        control_frame.pack(fill=tk.X, pady=5)
+        
+        # Create a grid layout for more consistent sizing and spacing
+        control_frame.columnconfigure(0, weight=1)  # RESTART button column
+        control_frame.columnconfigure(1, weight=1)  # STOP button column
+        control_frame.columnconfigure(2, weight=2)  # Spacer column
+        control_frame.columnconfigure(3, weight=1)  # RUN button column
+        
+        # Define buttons with consistent padding
         button_padding = 5
-
+        
         self.restart_button = ttk.Button(
-            left_frame, 
+            control_frame, 
             text="RESTART", 
             command=self.restart_app,
             style="Secondary.TButton"
         )
-        self.restart_button.pack(side=tk.LEFT, padx=button_padding, fill=tk.X, expand=True)
-
+        self.restart_button.grid(row=0, column=0, padx=button_padding, pady=5, sticky="ew")
+        
         self.stop_button = ttk.Button(
-            left_frame, 
+            control_frame, 
             text="STOP", 
             command=self.stop_monitoring,
             state=tk.DISABLED,
             style="Danger.TButton"
         )
-        self.stop_button.pack(side=tk.LEFT, padx=button_padding, fill=tk.X, expand=True)
-
+        self.stop_button.grid(row=0, column=1, padx=button_padding, pady=5, sticky="ew")
+        
         self.run_button = ttk.Button(
-            right_frame, 
+            control_frame, 
             text="RUN", 
             command=self.start_monitoring,
             style="Primary.TButton"
         )
-        self.run_button.pack(side=tk.RIGHT, padx=button_padding, fill=tk.X, expand=True)
+        self.run_button.grid(row=0, column=3, padx=button_padding, pady=5, sticky="ew")
     
     def _load_settings(self):
         """Load saved settings into UI components"""
